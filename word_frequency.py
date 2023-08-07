@@ -27,3 +27,32 @@ class GetTopBooks(luigi.Task):
                         link=result["href"]
                     )
                     )
+
+
+class DownloadBooks(luigi.Task):
+    """
+    Download a specified list of books
+    """
+
+    FileID = luigi.IntParameter()
+    REPLACE_LIST = """.,"';_[]:*-"""
+
+    def requires(self):
+        return GetTopBooks()
+
+    def output(self):
+        return luigi.LocalTarget("data/downloads/{}.txt".format(self.FileID))
+
+    def run(self):
+        with self.input().open("r") as i:
+            url = i.read().splitlines()[self.FileID]
+
+            with self.output().open("w") as outfile:
+                book_downloads = requests.get(url)
+                book_text = book_downloads.text
+
+                for char in self.REPLACE_LIST:
+                    book_text = book_text.replace(char, " ")
+
+                book_text = book_text.lower()
+                outfile.write(book_text)
