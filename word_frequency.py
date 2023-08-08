@@ -4,6 +4,7 @@ from bs4 import BeautifulSoup
 from collections import Counter
 import pickle
 import io
+import codecs
 
 
 class GetTopBooks(luigi.Task):
@@ -69,20 +70,25 @@ class DownloadBooks(luigi.Task):
 
 class CountWords(luigi.Task):
     """
-    Count the frequency in the most common words in the file
-    """
+        Count the frequency of the most common words from a file
+        """
+
     FileID = luigi.IntParameter()
 
     def requires(self):
         return DownloadBooks(FileID=self.FileID)
 
     def output(self):
-        return luigi.LocalTarget('data/counts/count_{}.pickle'.format(self.FileID),
-                                 format=luigi.format.Nop)
+        return luigi.LocalTarget(
+            "data/counts/count_{}.pickle".format(self.FileID),
+            format=luigi.format.Nop
+        )
 
     def run(self):
-        with self.input().open("r") as i:
-            word_count = Counter(i.read().split())
+        with codecs.open(self.input().path, "r", encoding='ISO-8859-1') as i:
+            content = i.read()
 
-            with self.output().open("w") as outfile:
-                pickle.dump(word_count, outfile)
+        word_count = Counter(content.split())
+
+        with self.output().open("wb") as outfile:
+            pickle.dump(word_count, outfile)
