@@ -14,6 +14,8 @@ HelloLuigi() is a Luigi task by adding the luigi.Task mixin (Class contains meth
 without having to be the parent class.
 The output() method defines one or more Target outputs that your task produces. Luigi.LocalTarget is a local file.
  """
+
+
 class HelloLuigi(luigi.Task):
 
     def output(self):
