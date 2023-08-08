@@ -92,3 +92,39 @@ class CountWords(luigi.Task):
 
         with self.output().open("wb") as outfile:
             pickle.dump(word_count, outfile)
+
+
+class GlobalParams(luigi.Config):
+    """Defining Configuration Parameters in the pipline. These will allow to customize how many
+    books to analyze and the number of words to include in the results.
+
+    To set parameters that are shared among tasks, it is needed to create a Config() class. Other pipeline stages
+    can reference the parameters defined in the Config() class."""
+    NumberBooks = luigi.IntParameter(default=10)
+    NumberTopWords = luigi.IntParameter(default=500)
+
+
+class TopWords(luigi.Task):
+    """
+    Aggregate the count results from the different files
+    """
+
+    def requires(self):
+        required_inputs = []
+        for i in range(GlobalParams().NumberBooks):
+            required_inputs.append(CountWords(FileID=i))
+        return required_inputs
+
+    def output(self):
+        return luigi.LocalTarget("data/summary.txt")
+
+    def run(self):
+        total_count = Counter()
+        for inputs in self.input():
+            with inputs.open("rb") as infile:
+                next_counter = pickle.load(infile)
+                total_count += next_counter
+
+        with codecs.open(self.output().path, "w", encoding='utf-8') as f:
+            for item in total_count.most_common(GlobalParams().NumberTopWords):
+                f.write("{0: <15}{1}\n".format(*item))
