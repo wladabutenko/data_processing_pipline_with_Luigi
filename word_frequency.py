@@ -3,6 +3,7 @@ import luigi
 from bs4 import BeautifulSoup
 from collections import Counter
 import pickle
+import io
 
 
 class GetTopBooks(luigi.Task):
@@ -35,8 +36,8 @@ class DownloadBooks(luigi.Task):
     """
     Download a specified list of books
     """
-
     FileID = luigi.IntParameter()
+
     REPLACE_LIST = """.,"';_[]:*-"""
 
     def requires(self):
@@ -47,16 +48,22 @@ class DownloadBooks(luigi.Task):
 
     def run(self):
         with self.input().open("r") as i:
-            url = i.read().splitlines()[self.FileID]
+            book_lines = i.read().splitlines()
 
-            with self.output().open("w") as outfile:
-                book_downloads = requests.get(url)
-                book_text = book_downloads.text
+            if self.FileID < 0 or self.FileID >= len(book_lines):
+                raise ValueError("Invalid FileID. The index is out of range.")
 
-                for char in self.REPLACE_LIST:
-                    book_text = book_text.replace(char, " ")
+            URL = book_lines[self.FileID]
 
-                book_text = book_text.lower()
+            book_downloads = requests.get(URL)
+            book_text = book_downloads.text
+
+            for char in self.REPLACE_LIST:
+                book_text = book_text.replace(char, " ")
+
+            book_text = book_text.lower()
+
+            with io.open(self.output().path, mode="w", encoding="utf-8") as outfile:
                 outfile.write(book_text)
 
 
