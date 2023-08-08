@@ -9,14 +9,13 @@ in your pipeline that are required to execute the current task. The run() method
 """
 import luigi
 
-"""
+
+class HelloLuigi(luigi.Task):
+ """
 HelloLuigi() is a Luigi task by adding the luigi.Task mixin (Class contains methods for use by other classes 
 without having to be the parent class.
 The output() method defines one or more Target outputs that your task produces. Luigi.LocalTarget is a local file.
  """
-
-
-class HelloLuigi(luigi.Task):
 
     def output(self):
         return luigi.LocalTarget('hello-luigi.txt')
